@@ -1,0 +1,6 @@
+@DemoThreadedFetch_HostAddress = http://localhost:5181
+
+GET {{DemoThreadedFetch_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
