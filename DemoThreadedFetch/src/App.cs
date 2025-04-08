@@ -24,8 +24,6 @@ app.MapGet("/wikiApiFetch", (HttpRequest req) =>
     int maxTaskCount;
     if (!int.TryParse(input, out maxTaskCount)) {
         maxTaskCount = 0;
-    } else if (maxTaskCount > 5){
-        maxTaskCount = 5;
     }
     
     ThreadedFetch data = new(maxTaskCount);

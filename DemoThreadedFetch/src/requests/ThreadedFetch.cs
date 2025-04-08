@@ -27,7 +27,7 @@ public class ThreadedFetch : ControllerBase
         if(maxCount != 0) {
             // meant for static url calls
             for (int i = 0; i < maxCount; i++) {
-            tasks.Add(limitRequest(urls[i], i + 1));
+            tasks.Add(limitRequest("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=revisions&titles=hotdog&rvprop=timestamp|user&rvlimit=27&redirects", i + 1));
             }
         } else {
             // this is for a set of urls that need to be processed. Demo uses WIKIAPI.
