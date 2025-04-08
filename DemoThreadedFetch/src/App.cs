@@ -9,6 +9,8 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+ThreadedFetch data = new();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -18,14 +20,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapGet("/wikiApiFetch", (HttpRequest req) => 
-{
-    string? input = req.Query["maxTaskCount"];
-    int maxTaskCount;
-    if (!int.TryParse(input, out maxTaskCount)) {
-        maxTaskCount = 3;
-    }
-    
-    ThreadedFetch data = new ThreadedFetch(maxTaskCount);
+{    
     var apiInfo = data.FetchData();
     return apiInfo;
 })

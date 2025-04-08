@@ -1,6 +1,6 @@
 @DemoThreadedFetch_HostAddress = http://localhost:5181
 
-GET {{DemoThreadedFetch_HostAddress}}/weatherforecast/
+GET {{DemoThreadedFetch_HostAddress}}/wikiApiFetch/
 Accept: application/json
 
 ###
