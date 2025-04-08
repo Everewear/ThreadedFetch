@@ -2,10 +2,17 @@ using Microsoft.AspNetCore.Mvc;
 
 public class ThreadedFetch : ControllerBase
 {
+    public ThreadedFetch(int maxTaskCount) {
+        maxCount = maxTaskCount;
+
+    }
+    private static int maxCount;
     private static readonly HttpClient client = new HttpClient();
     private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(3);
     public async Task<IActionResult> FetchData() {
         var counter = 1;
+
+        // TODO allow for custom links
         var urls = new List<string>
         {
             "https://en.wikipedia.org/w/api.php?action=query&format=json&prop=revisions&titles=frank_zappa&rvprop=timestamp|user&rvlimit=27&redirects",
@@ -16,14 +23,23 @@ public class ThreadedFetch : ControllerBase
         };
         
         var tasks = new List<Task<IActionResult>>();
-
-        foreach (var url in urls) {
+        
+        if(maxCount != 0) {
+            // meant for static url calls
+            for (int i = 0; i < maxCount; i++) {
+            tasks.Add(limitRequest(urls[i], i + 1));
+            }
+        } else {
+            // this is for a set of urls that need to be processed. Demo uses WIKIAPI.
+            foreach (var url in urls) {
             tasks.Add(limitRequest(url, counter));
             counter += 1;
+            }
         }
         IActionResult[] responses = await Task.WhenAll(tasks);
 
         var jsonStrings = responses.OfType<OkObjectResult>().ToList();
+
         return Ok(jsonStrings);
     }
 
@@ -55,6 +71,8 @@ public class ThreadedFetch : ControllerBase
                 Console.WriteLine($"Task{counter} finished");
                 return Ok(content);
             }
+        } catch (Exception HttpRequest){
+            return BadRequest($"Bad HTTP Link: {HttpRequest}");
         }
         finally {
             semaphore.Release();
