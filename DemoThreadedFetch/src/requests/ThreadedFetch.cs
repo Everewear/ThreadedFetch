@@ -27,12 +27,12 @@ public class ThreadedFetch : ControllerBase
         if(maxCount != 0) {
             // meant for static url calls
             for (int i = 0; i < maxCount; i++) {
-            tasks.Add(limitRequest("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=revisions&titles=hotdog&rvprop=timestamp|user&rvlimit=27&redirects", i + 1));
+            tasks.Add(LimitRequest("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=revisions&titles=hotdog&rvprop=timestamp|user&rvlimit=27&redirects", i + 1));
             }
         } else {
             // this is for a set of urls that need to be processed. Demo uses WIKIAPI.
             foreach (var url in urls) {
-            tasks.Add(limitRequest(url, counter));
+            tasks.Add(LimitRequest(url, counter));
             counter += 1;
             }
         }
@@ -43,7 +43,7 @@ public class ThreadedFetch : ControllerBase
         return Ok(jsonStrings);
     }
 
-    private async Task<IActionResult> limitRequest(string url, int counter){
+    private async Task<IActionResult> LimitRequest(string url, int counter){
         await semaphore.WaitAsync();
         try{
             Console.WriteLine($"Task{counter}");
