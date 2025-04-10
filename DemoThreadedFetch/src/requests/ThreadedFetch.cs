@@ -15,6 +15,7 @@ public class ThreadedFetch : ControllerBase
     private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(3);
     public async Task<IActionResult> FetchData() {
         var counter = 1;
+        sw.Reset();
         sw.Start();
 
         // TODO allow for custom links
@@ -31,27 +32,14 @@ public class ThreadedFetch : ControllerBase
         
         if(maxCount != 0) {
             // meant for static url calls
-            if(limitThreads == "yes"){
-                for (int i = 0; i < maxCount; i++) {
-                    tasks.Add(LimitRequest("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=revisions&titles=hotdog&rvprop=timestamp|user&rvlimit=27&redirects", i + 1));
-                }
-            } else {
-                for (int i = 0; i < maxCount; i++) {
-                    tasks.Add(NoLimit("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=revisions&titles=hotdog&rvprop=timestamp|user&rvlimit=27&redirects", i + 1));
-                }
+            for (int i = 0; i < maxCount; i++) {
+                tasks.Add(GetRequest("https://en.wikipedia.org/w/api.php?action=query&format=json&prop=revisions&titles=hotdog&rvprop=timestamp|user&rvlimit=27&redirects", i + 1));
             }
         } else {
             // this is for a set of urls that need to be processed. Demo uses WIKIAPI.
-            if(limitThreads == "yes"){
-                foreach (var url in urls) {
-                    tasks.Add(LimitRequest(url, counter));
-                    counter += 1;
-                }
-            } else {
-                foreach (var url in urls) {
-                    tasks.Add(NoLimit(url, counter));
-                    counter += 1;
-                }
+            foreach (var url in urls) {
+                tasks.Add(GetRequest(url, counter));
+                counter += 1;
             }
         }
         IActionResult[] responses = await Task.WhenAll(tasks);
@@ -62,40 +50,11 @@ public class ThreadedFetch : ControllerBase
         
         return Ok(jsonStrings);
     }
-
-    private async Task<IActionResult> NoLimit(string url, int counter){
-        try{
-            Console.WriteLine($"Task{counter}");
-            var response = await client.GetAsync(url);
-            if(response.IsSuccessStatusCode) {
-                var content = new {
-                    data = new{
-                        rewrites = await response.Content.ReadAsStringAsync(),
-                        task = counter,
-                        startTime = DateTime.UtcNow,
-                        finishTime = DateTime.UtcNow
-                        }
-                };
-                Console.WriteLine($"Task{counter} finsihed");
-                return Ok(content);
-            } else {
-                var content = new {
-                    data = new{
-                        failure = "Failure",
-                        task = counter,
-                        startTime = DateTime.UtcNow,
-                        finishTime = DateTime.UtcNow
-                        }
-                };
-                Console.WriteLine($"Task{counter} finished");
-                return Ok(content);
-            }
-        } catch (Exception HttpRequest){
-            return BadRequest($"Bad HTTP Link: {HttpRequest}");
-        }
-    }
-    private async Task<IActionResult> LimitRequest(string url, int counter){
+    
+    private async Task<IActionResult> GetRequest(string url, int counter){
+        if(limitThreads == "yes"){
         await semaphore.WaitAsync();
+        }
         try{
             Console.WriteLine($"Task{counter}");
             var response = await client.GetAsync(url);
@@ -126,7 +85,9 @@ public class ThreadedFetch : ControllerBase
             return BadRequest($"Bad HTTP Link: {HttpRequest}");
         }
         finally {
+            if(limitThreads == "yes"){
             semaphore.Release();
+            }
         }
     }
 }
