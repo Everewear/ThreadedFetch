@@ -1,0 +1,1 @@
+web: cd ThreadedFetch; dotnet run
