@@ -1,1 +1,1 @@
-web: cd ThreadedFetch; dotnet run
+web: dotnet run --project DemoThreadedFetch
