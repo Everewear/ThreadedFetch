@@ -53,7 +53,7 @@ public class ThreadedFetch : ControllerBase
     
     private async Task<IActionResult> GetRequest(string url, int counter){
         if(limitThreads == "yes"){
-        await semaphore.WaitAsync();
+            await semaphore.WaitAsync();
         }
         try{
             Console.WriteLine($"Task{counter}");
@@ -86,7 +86,7 @@ public class ThreadedFetch : ControllerBase
         }
         finally {
             if(limitThreads == "yes"){
-            semaphore.Release();
+                semaphore.Release();
             }
         }
     }
