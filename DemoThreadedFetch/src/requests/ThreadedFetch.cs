@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.ObjectPool;
 
 public class ThreadedFetch : ControllerBase
 {
@@ -8,13 +7,18 @@ public class ThreadedFetch : ControllerBase
         maxCount = maxTaskCount;
         limitThreads = limit;
     }
-    private static string limitThreads;
+    private static string? limitThreads;
     private static int maxCount;
     private static readonly HttpClient client = new HttpClient();
     private static readonly Stopwatch sw = new();
     private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(3);
     public async Task<IActionResult> FetchData() {
         var counter = 1;
+        /*
+        This is how you connect to any database
+        DatabaseConnector.Database();
+        */
+        
         sw.Reset();
         sw.Start();
 
@@ -86,7 +90,7 @@ public class ThreadedFetch : ControllerBase
         }
         finally {
             if(limitThreads == "yes"){
-                semaphore.Release();
+            semaphore.Release();
             }
         }
     }

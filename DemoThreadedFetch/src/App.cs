@@ -22,10 +22,14 @@ app.MapGet("/wikiApiFetch", (HttpRequest req) =>
     string? input = req.Query["maxTaskCount"];
     string? limit = req.Query["limit"];
     int maxTaskCount;
+    
     // defaults to limiting threads if not defined.
-    if(limit != "yes" || limit != "no"){
-        limit = "yes";
-    }
+    limit = limit switch {
+        "no" => "no",
+        "yes" => "yes",
+        _ => "yes"
+    };
+    
     if (!int.TryParse(input, out maxTaskCount)) {
         maxTaskCount = 0;
     }
