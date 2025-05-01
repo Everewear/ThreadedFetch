@@ -1,21 +1,24 @@
 using System.Diagnostics;
-using System.Reflection.Metadata;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 
 public class ThreadedFetch : ControllerBase
 {
-    public ThreadedFetch(int maxTaskCount, string limit, string body) {
-        maxCount = maxTaskCount;
-        limitThreads = limit;
-        recievedBody = body;
-    }
     private static string? limitThreads;
     private static int maxCount;
     private static string? recievedBody;
     private static readonly HttpClient client = new HttpClient();
     private static readonly Stopwatch sw = new();
-    private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(3);
+    private static readonly SemaphoreSlim semaphore = new(3);
+
+    public ThreadedFetch(int maxTaskCount, string limit, string body) {
+        maxCount = maxTaskCount;
+        limitThreads = limit;
+        recievedBody = body;
+    }
+    // 
+
     public async Task<IActionResult> FetchData() {
         /*
         This is how you connect to any database
@@ -40,12 +43,22 @@ public class ThreadedFetch : ControllerBase
 
         var jsonStrings = responses.OfType<OkObjectResult>().ToList();
         TimeSpan timeTaken = sw.Elapsed;
-        Console.WriteLine($"Time Elapsed: {timeTaken.ToString(@"m\:ss\.fff")}");
+        Console.WriteLine($"Time Elapsed: {timeTaken:m\\:ss\\.fff}");
         
         return Ok(jsonStrings);
     }
+
+    private async Task<IActionResult> PostRequest(string url, HttpContent content) {
+        var response = await client.PostAsync(url, content);
+            if(response.IsSuccessStatusCode) {
+                return Ok(content);
+            } 
+            else {
+                return Ok(content);
+            }
+    }
     
-    private async Task<IActionResult> GetRequest(string url, int counter){
+    private async Task<IActionResult> GetRequest(string url, int counter) {
 
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         ParsedData? parsedData = JsonSerializer.Deserialize<ParsedData>(recievedBody, options);
@@ -69,7 +82,10 @@ public class ThreadedFetch : ControllerBase
                 if (parsedData.VendorData != null) {
                     var newUrl = parsedData.VendorData.imagesURL + img.url;
                     var response = await fetchImageBlob(newUrl);
-                    infoToSend?.files.Add(response); // call to a function with a return value that is a blob.
+                    if (response != null)
+                    {
+                        infoToSend?.files.Add(new Blob { FileName = img.url, Data = response }); // call to a function with a return value that is a blob.
+                    }
                 }
             }
         }
@@ -77,8 +93,20 @@ public class ThreadedFetch : ControllerBase
             await semaphore.WaitAsync();
         }
         try{
+            using var formData = new MultipartFormDataContent();
+
+            if (infoToSend?.files != null && infoToSend.files.Count != 0)
+            {
+                foreach (var file in infoToSend.files)
+                {
+                    var fileContent = new ByteArrayContent(file.Data);
+                    fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("image/jpeg"); // Adjust the content type as needed
+                    formData.Add(fileContent, "images", file.FileName); // "images" is the field name the AI will likely expect
+                }
+            }
+
             Console.WriteLine($"Task{counter}");
-            var response = await client.GetAsync(url);
+            var response = await client.PostAsync(url, formData);
             if(response.IsSuccessStatusCode) {
                 var content = new {
                     data = new{
