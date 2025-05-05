@@ -1,7 +1,10 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
+using dotenv.net;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 public class ThreadedFetch : ControllerBase
 {
@@ -11,20 +14,19 @@ public class ThreadedFetch : ControllerBase
     private static readonly HttpClient client = new HttpClient();
     private static readonly Stopwatch sw = new();
     private static readonly SemaphoreSlim semaphore = new(3);
-
     public ThreadedFetch(int maxTaskCount, string limit, string body) {
         maxCount = maxTaskCount;
         limitThreads = limit;
         recievedBody = body;
     }
     // 
-
+    
     public async Task<IActionResult> FetchData() {
         /*
         This is how you connect to any database
         DatabaseConnector.Database();
         */
-        
+        var envVars = DotEnv.Read();
         sw.Reset();
         sw.Start();
 
@@ -35,7 +37,7 @@ public class ThreadedFetch : ControllerBase
         if(maxCount != 0) {
             // meant for static url calls
             for (int i = 0; i < maxCount; i++) {
-                tasks.Add(GetRequest("http://localhost:5555/analyze?temperature=0.5&model=gpt-4o-2024-05-13&verbose=true&format=json", i + 1)); // this will use AI instead.
+                tasks.Add(GetRequest(envVars["EVEREWEAR_AI_URL"], i + 1)); // this will use AI instead.
             }
         }
 
@@ -44,7 +46,10 @@ public class ThreadedFetch : ControllerBase
         var jsonStrings = responses.OfType<OkObjectResult>().ToList();
         TimeSpan timeTaken = sw.Elapsed;
         Console.WriteLine($"Time Elapsed: {timeTaken:m\\:ss\\.fff}");
-        
+        using var formData = new MultipartFormDataContent();
+        var formContent = new StringContent(JsonConvert.SerializeObject(jsonStrings), Encoding.UTF8, "application/json");
+        formData.Add(formContent, "response");
+        var bodyData = await client.PutAsync("http://localhost:3000/retrieveInfo", formContent);
         return Ok(jsonStrings);
     }
 
@@ -59,21 +64,19 @@ public class ThreadedFetch : ControllerBase
     }
     
     private async Task<IActionResult> GetRequest(string url, int counter) {
-
+        var envVars = DotEnv.Read();
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        ParsedData? parsedData = JsonSerializer.Deserialize<ParsedData>(recievedBody, options);
+        ParsedData? parsedData = System.Text.Json.JsonSerializer.Deserialize<ParsedData>(recievedBody, options);
         var infoToSend = new {
-            prompts = new Dictionary<string, string>(), // this just needs to be turned back into JSON.
-            files = new List<Blob>(), // this needs to be blobs. might require some custom class, C# doesn't natively support blobs
+            prompts = new Dictionary<string, string>(),
+            files = new List<Blob>(),
         };
-        //Console.WriteLine(JsonSerializer.Serialize(parsedData, new JsonSerializerOptions { WriteIndented = true }));
 
         if (parsedData?.Prompts != null)
         {
             foreach (var prompt in parsedData.Prompts)
             {
                 infoToSend.prompts[prompt.attribute] = prompt.prompt;
-                Console.WriteLine(infoToSend.prompts[prompt.attribute]);
             }
         }
 
@@ -94,7 +97,6 @@ public class ThreadedFetch : ControllerBase
         }
         try{
             using var formData = new MultipartFormDataContent();
-
             if (infoToSend?.files != null && infoToSend.files.Count != 0)
             {
                 foreach (var file in infoToSend.files)
@@ -105,7 +107,10 @@ public class ThreadedFetch : ControllerBase
                 }
             }
 
+            var formContent = new StringContent(JsonConvert.SerializeObject(infoToSend?.prompts), Encoding.UTF8, "application/json");
+            formData.Add(formContent, "prompts");
             Console.WriteLine($"Task{counter}");
+            client.DefaultRequestHeaders.Add("ApiKey", envVars["EVEREWEAR_API_KEY"]);
             var response = await client.PostAsync(url, formData);
             if(response.IsSuccessStatusCode) {
                 var content = new {

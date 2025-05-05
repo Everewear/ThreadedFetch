@@ -56,3 +56,4 @@ nunit-*.xml
 
 # VS Code settings and configs
 .vsCode
+.env
