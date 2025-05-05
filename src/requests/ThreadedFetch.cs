@@ -37,7 +37,7 @@ public class ThreadedFetch : ControllerBase
         if(maxCount != 0) {
             // meant for static url calls
             for (int i = 0; i < maxCount; i++) {
-                tasks.Add(GetRequest(envVars["EVEREWEAR_AI_URL"], i + 1)); // this will use AI instead.
+                tasks.Add(PostRequest(envVars["EVEREWEAR_AI_URL"], i + 1)); // this will use AI instead.
             }
         }
 
@@ -49,21 +49,11 @@ public class ThreadedFetch : ControllerBase
         using var formData = new MultipartFormDataContent();
         var formContent = new StringContent(JsonConvert.SerializeObject(jsonStrings), Encoding.UTF8, "application/json");
         formData.Add(formContent, "response");
-        var bodyData = await client.PutAsync("http://localhost:3000/retrieveInfo", formContent);
+        var bodyData = await client.PutAsync($"{envVars["PRODUCTION_URL"]}/retrieveInfo", formContent);
         return Ok(jsonStrings);
     }
-
-    private async Task<IActionResult> PostRequest(string url, HttpContent content) {
-        var response = await client.PostAsync(url, content);
-            if(response.IsSuccessStatusCode) {
-                return Ok(content);
-            } 
-            else {
-                return Ok(content);
-            }
-    }
     
-    private async Task<IActionResult> GetRequest(string url, int counter) {
+    private async Task<IActionResult> PostRequest(string url, int counter) {
         var envVars = DotEnv.Read();
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         ParsedData? parsedData = System.Text.Json.JsonSerializer.Deserialize<ParsedData>(recievedBody, options);
