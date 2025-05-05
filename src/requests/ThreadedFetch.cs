@@ -61,6 +61,7 @@ public class ThreadedFetch : ControllerBase
             prompts = new Dictionary<string, string>(),
             files = new List<Blob>(),
         };
+        var itemID = parsedData?.ItemID;
 
         if (parsedData?.Prompts != null)
         {
@@ -69,7 +70,7 @@ public class ThreadedFetch : ControllerBase
                 infoToSend.prompts[prompt.attribute] = prompt.prompt;
             }
         }
-
+        
         if (parsedData?.ImageData != null) {
             foreach (var img in parsedData.ImageData) {
                 if (parsedData.VendorData != null) {
@@ -107,6 +108,7 @@ public class ThreadedFetch : ControllerBase
                     data = new{
                         rewrites = await response.Content.ReadAsStringAsync(),
                         task = counter,
+                        item_id = itemID,
                         startTime = DateTime.UtcNow,
                         finishTime = DateTime.UtcNow
                         }
@@ -118,6 +120,7 @@ public class ThreadedFetch : ControllerBase
                     data = new{
                         failure = "Failure",
                         task = counter,
+                        item_id = itemID,
                         startTime = DateTime.UtcNow,
                         finishTime = DateTime.UtcNow
                         }
@@ -154,12 +157,10 @@ public class ThreadedFetch : ControllerBase
     public class ParsedData {
         public List<PromptInfo>? Prompts {get; set;}
         public VendorInformation? VendorData {get; set;}
-        public List<ItemInfo>? ItemData {get; set;}
+        public int ItemID {get; set;}
         public List<ImageInfo>? ImageData { get; set; }
     }
-    public class ItemInfo {
-        public int ItemID {get; set;}
-    }
+
     public class ImageInfo {
         public string url {get; set;} 
     }
