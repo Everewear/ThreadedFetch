@@ -26,10 +26,8 @@ namespace DemoThreadedFetch
             {
                 endpoints.MapPost("/wikiApiFetch", async (HttpRequest req) =>
                     {
-                        string? input = req.Query["maxTaskCount"];
                         string? limit = req.Query["limit"];
                         string? body = await new StreamReader(req.Body).ReadToEndAsync();
-                        int maxTaskCount;
                         
                         // defaults to limiting threads if not defined.
                         limit = limit switch
@@ -39,12 +37,7 @@ namespace DemoThreadedFetch
                             _ => "yes"
                         };
 
-                        if (!int.TryParse(input, out maxTaskCount))
-                        {
-                            maxTaskCount = 0;
-                        }
-
-                        ThreadedFetch data = new(maxTaskCount, limit, body);
+                        ThreadedFetch data = new(limit, body);
                         var apiInfo = await data.FetchData();
                         return apiInfo;
                     });
