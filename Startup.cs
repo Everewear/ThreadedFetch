@@ -1,3 +1,5 @@
+using dotenv.net;
+
 namespace DemoThreadedFetch
 {
     public class Startup
@@ -26,9 +28,12 @@ namespace DemoThreadedFetch
             {
                 endpoints.MapPost("/wikiApiFetch", async (HttpRequest req) =>
                     {
+                        HttpClient client = new HttpClient();
+
                         string? limit = req.Query["limit"];
                         string? body = await new StreamReader(req.Body).ReadToEndAsync();
-                        
+                        var envVars = DotEnv.Read();
+                        client.DefaultRequestHeaders.Add("ApiKey", envVars["EVEREWEAR_API_KEY"]);
                         // defaults to limiting threads if not defined.
                         limit = limit switch
                         {
@@ -37,7 +42,7 @@ namespace DemoThreadedFetch
                             _ => "yes"
                         };
 
-                        ThreadedFetch data = new(limit, body);
+                        ThreadedFetch data = new(limit, body, client);
                         var apiInfo = await data.FetchData();
                         return apiInfo;
                     });
