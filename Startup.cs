@@ -2,12 +2,10 @@ using dotenv.net;
 
 namespace DemoThreadedFetch
 {
-    public class Startup
+    public class Startup(IConfiguration configuration)
     {
-        public IConfiguration Configuration {get;}
-        public Startup(IConfiguration configuration) {
-            Configuration = configuration;
-        }
+        public IConfiguration Configuration { get; } = configuration;
+
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
@@ -42,8 +40,8 @@ namespace DemoThreadedFetch
                             _ => "yes"
                         };
 
-                        ThreadedFetch data = new(limit, body, client);
-                        var apiInfo = await data.FetchData();
+                        src.requests.ThreadedFetch data = new(limit, body, client);
+                        var apiInfo = await data.FetchData(data.GetOptions());
                         return apiInfo;
                     });
             });
