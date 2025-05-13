@@ -26,7 +26,7 @@ namespace DemoThreadedFetch
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapPost("/wikiApiFetch", async (HttpRequest req) =>
+                endpoints.MapPost("/threadedCalls", async (HttpRequest req) =>
                     {
                         HttpClient client = new HttpClient();
 
