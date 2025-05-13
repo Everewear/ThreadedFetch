@@ -25,7 +25,7 @@ public class ThreadedFetch : ControllerBase
     public async Task<IActionResult> FetchData()
     {
         /*
-        This is how you connect to any database
+        This is how you connect to any mysql database
         DatabaseConnector.Database();
         */
         var envVars = DotEnv.Read();
@@ -33,14 +33,16 @@ public class ThreadedFetch : ControllerBase
         sw.Start();
 
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
         ParsedData? parsedData = System.Text.Json.JsonSerializer.Deserialize<ParsedData>(recievedBody, options);
+
         var tasks = new List<Task<IActionResult>>();
 
         if (parsedData?.Prompts != null)
         {
             foreach (var prompt in parsedData.Prompts)
             {
-                SentInfo.Prompts[prompt.attribute] = prompt.prompt;
+                SentInfo.Prompts[prompt.Attribute] = prompt.Prompt;
             }
         }
 
@@ -75,9 +77,8 @@ public class ThreadedFetch : ControllerBase
         using var returnFormData = new MultipartFormDataContent();
         var returnFormContent = new StringContent(JsonConvert.SerializeObject(jsonStrings), Encoding.UTF8, "application/json");
         returnFormData.Add(returnFormContent, "response");
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
+
         var bodyData = await client.PutAsync($"{envVars["PRODUCTION_URL"]}/retrieveInfo", returnFormContent);
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
         return Ok(jsonStrings);
     }
 
@@ -104,19 +105,18 @@ public class ThreadedFetch : ControllerBase
         try
         {
             Console.WriteLine($"Task{counter}");
+
             var response = await retry.Retry(url, formData, client, timeSpan: TimeSpan.FromSeconds(1000), tryCount: 3);
+
             if (response.IsSuccessStatusCode)
             {
                 var content = new
                 {
-                    data = new
-                    {
-                        rewrites = await response.Content.ReadAsStringAsync(),
-                        task = counter,
-                        item_id = itemID,
-                        startTime = DateTime.UtcNow,
-                        finishTime = DateTime.UtcNow
-                    }
+                    data = await response.Content.ReadAsStringAsync(),
+                    task = counter,
+                    item_id = itemID,
+                    startTime = DateTime.UtcNow,
+                    finishTime = DateTime.UtcNow
                 };
                 Console.WriteLine($"Task{counter} finsihed");
                 return Ok(content);
@@ -125,14 +125,11 @@ public class ThreadedFetch : ControllerBase
             {
                 var content = new
                 {
-                    data = new
-                    {
-                        failure = response,
-                        task = counter,
-                        item_id = itemID,
-                        startTime = DateTime.UtcNow,
-                        finishTime = DateTime.UtcNow
-                    }
+                    failure = response,
+                    task = counter,
+                    item_id = itemID,
+                    startTime = DateTime.UtcNow,
+                    finishTime = DateTime.UtcNow
                 };
                 Console.WriteLine($"Task{counter} finished");
                 return Ok(content);
@@ -153,14 +150,12 @@ public class ThreadedFetch : ControllerBase
     }
 
     /*fetch the blob of an image and write it to a byte array. 
- This should be passed to info to send per item. */
+        This should be passed to info to send per item. */
     private async Task<byte[]?> FetchImageBlob(string imgURL)
     {
         try
         {
-#pragma warning disable CS8604 // Possible null reference argument.
             return await retry.Retry(imgURL, client, timeSpan: TimeSpan.FromSeconds(1000), tryCount: 3);
-#pragma warning restore CS8604 // Possible null reference argument.
         }
         catch (Exception ex)
         {
@@ -194,8 +189,8 @@ public class ThreadedFetch : ControllerBase
 
     private class PromptInfo
     {
-        public required string prompt { get; set; }
-        public required string attribute { get; set; }
+        public required string Prompt { get; set; }
+        public required string Attribute { get; set; }
     }
 
     private class Image

@@ -19,7 +19,8 @@ public class RetryFetch
     }
 
     // overload method for retrying for blob images
-    public async Task<byte[]> Retry(string imgURL, HttpClient client, TimeSpan timeSpan, int tryCount){
+    public async Task<byte[]> Retry(string imgURL, HttpClient client, TimeSpan timeSpan, int tryCount)
+    {
 
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(tryCount);
         while (true)
