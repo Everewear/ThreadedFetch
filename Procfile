@@ -1,1 +1,1 @@
-web: dotnet run --project DemoThreadedFetch
+web: dotnet ./publish/DemoThreadedFetch.dll
