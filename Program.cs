@@ -19,7 +19,7 @@ namespace DemoThreadedFetch
 
                 if (env.IsDevelopment())
                 {
-                    DotEnv.Read();
+                    DotEnv.Load();
                 }
 
                 config.AddEnvironmentVariables();
