@@ -3,7 +3,8 @@ using dotenv.net;
 namespace DemoThreadedFetch
 {
     public class Startup(IConfiguration configuration)
-    {
+    {   
+        
         public IConfiguration Configuration { get; } = configuration;
 
         public void ConfigureServices(IServiceCollection services)
@@ -31,7 +32,7 @@ namespace DemoThreadedFetch
                         string? limit = req.Query["limit"];
                         string? body = await new StreamReader(req.Body).ReadToEndAsync();
                         var envVars = DotEnv.Read();
-                        client.DefaultRequestHeaders.Add("ApiKey", envVars["EVEREWEAR_API_KEY"]);
+                        client.DefaultRequestHeaders.Add("ApiKey", Environment.GetEnvironmentVariable("EVEREWEAR_API_KEY"));
                         // defaults to limiting threads if not defined.
                         limit = limit switch
                         {

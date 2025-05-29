@@ -67,7 +67,7 @@ namespace DemoThreadedFetch.src.requests
                             SentInfo?.Files.Add(new Blob { FileName = image.Url, Data = response });
                         }
                     }
-                    tasks.Add(PostRequest(envVars["EVEREWEAR_AI_URL"], i + 1, itemID));
+                    tasks.Add(PostRequest(Environment.GetEnvironmentVariable("EVEREWEAR_AI_URL"), i + 1, itemID));
                     i++;
                     SentInfo?.Files.Clear();
                 }
@@ -82,7 +82,7 @@ namespace DemoThreadedFetch.src.requests
             var returnFormContent = new StringContent(JsonConvert.SerializeObject(jsonStrings), Encoding.UTF8, "application/json");
             returnFormData.Add(returnFormContent, "response");
 
-            var bodyData = await client.PutAsync($"{envVars["PRODUCTION_URL"]}/retrieveInfo", returnFormContent);
+            var bodyData = await client.PutAsync($"{Environment.GetEnvironmentVariable("PRODUCTION_URL")}/retrieveInfo", returnFormContent);
             return Ok(jsonStrings);
         }
 
