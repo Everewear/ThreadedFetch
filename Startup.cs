@@ -1,5 +1,3 @@
-using dotenv.net;
-
 namespace DemoThreadedFetch
 {
     public class Startup(IConfiguration configuration)
@@ -13,11 +11,6 @@ namespace DemoThreadedFetch
 
         public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            // Configure the HTTP request pipeline.
-            if (env.IsDevelopment())
-            {
-                
-            }
 
             app.UseRouting();
             app.UseHttpsRedirection();
@@ -30,8 +23,11 @@ namespace DemoThreadedFetch
 
                         string? limit = req.Query["limit"];
                         string? body = await new StreamReader(req.Body).ReadToEndAsync();
-                        var envVars = DotEnv.Read();
-                        client.DefaultRequestHeaders.Add("ApiKey", envVars["EVEREWEAR_API_KEY"]);
+                        string? apiKey = Environment.GetEnvironmentVariable("EVEREWEAR_API_KEY");
+                        if (!string.IsNullOrEmpty(apiKey))
+                        {
+                            client.DefaultRequestHeaders.Add("ApiKey", apiKey);
+                        }
                         // defaults to limiting threads if not defined.
                         limit = limit switch
                         {

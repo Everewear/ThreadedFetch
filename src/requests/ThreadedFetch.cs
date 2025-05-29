@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using dotenv.net;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
@@ -35,7 +34,6 @@ namespace DemoThreadedFetch.src.requests
             This is how you connect to any mysql database
             DatabaseConnector.Database();
             */
-            var envVars = DotEnv.Read();
             sw.Reset();
             sw.Start();
             ParsedData? parsedData = System.Text.Json.JsonSerializer.Deserialize<ParsedData>(recievedBody, options);
@@ -67,7 +65,7 @@ namespace DemoThreadedFetch.src.requests
                             SentInfo?.Files.Add(new Blob { FileName = image.Url, Data = response });
                         }
                     }
-                    tasks.Add(PostRequest(envVars["EVEREWEAR_AI_URL"], i + 1, itemID));
+                    tasks.Add(PostRequest(Environment.GetEnvironmentVariable("EVEREWEAR_AI_URL"), i + 1, itemID));
                     i++;
                     SentInfo?.Files.Clear();
                 }
@@ -82,7 +80,7 @@ namespace DemoThreadedFetch.src.requests
             var returnFormContent = new StringContent(JsonConvert.SerializeObject(jsonStrings), Encoding.UTF8, "application/json");
             returnFormData.Add(returnFormContent, "response");
 
-            var bodyData = await client.PutAsync($"{envVars["PRODUCTION_URL"]}/retrieveInfo", returnFormContent);
+            var bodyData = await client.PutAsync($"{Environment.GetEnvironmentVariable("PRODUCTION_URL")}/retrieveInfo", returnFormContent);
             return Ok(jsonStrings);
         }
 
