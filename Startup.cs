@@ -37,8 +37,8 @@ namespace DemoThreadedFetch
                         };
 
                         src.requests.ThreadedFetch data = new(limit, body, client);
-                        var apiInfo = await data.FetchData(data.GetOptions());
-                        return apiInfo;
+                        //var apiInfo = await data.FetchData(data.GetOptions());
+                        return 1;
                     });
             });
             applicationLifetime.ApplicationStopping.Register(() =>
