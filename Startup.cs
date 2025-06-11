@@ -9,7 +9,7 @@ namespace DemoThreadedFetch
             services.AddControllersWithViews();
         }
 
-        public static void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public static void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime applicationLifetime)
         {
 
             app.UseRouting();
@@ -40,6 +40,11 @@ namespace DemoThreadedFetch
                         var apiInfo = await data.FetchData(data.GetOptions());
                         return apiInfo;
                     });
+            });
+            applicationLifetime.ApplicationStopping.Register(() =>
+            {
+                Console.WriteLine("SIGTERM received - performing cleanup.");
+                // Close DB connections, stop background tasks, etc.
             });
         }
     }
